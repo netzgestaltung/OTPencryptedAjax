@@ -29,10 +29,18 @@ and in the second step I add those results together.
 So in this case the one-time-PIN would be 10.
 
 After the user presses [decrypt] he or she will see an avatar
-(ensuring the user he not connected to a fake website)
-and a password input field an the place, where the "challenge" 
+(ensuring the user is not connected to a fake website)
+and a password input field at the place, where the "challenge" 
 and "PIN" fields have been before.
 
+     username:  ___________
+       |\_/|   
+      / @ @ \ 
+     ( > º < )
+      `>>x<<´ 
+      /  O  \ 
+     password:  ___________
+                    [login]
 
 WARNING
 
