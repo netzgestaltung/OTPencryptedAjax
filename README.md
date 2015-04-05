@@ -7,13 +7,10 @@ This is how it works:
 
 The login screen looks like this:
 
-username:  ___________
-
-challenge: ___________
-
-PIN:       ___________
-
-           [decrypt]
+     username:  ___________
+     challenge: ___________
+     PIN:       ___________
+                  [decrypt]
 
 after the user enters his username, he will be given a random number
 in the challenge field. With the challenge the user doesn't have to 
@@ -24,11 +21,9 @@ For example if challenge = 206 and the users secret PIN = 110
 I calculate the one-time-PIN by first adding the numbers digit-by-digit
 without carry:
 
-2 + 1 = 3
-
-0 + 1 = 1
-
-6 + 0 = 6
+      2 + 1 = 3
+      0 + 1 = 1
+      6 + 0 = 6
 
 and in the second step I add those results together.
 So in this case the one-time-PIN would be 10.
