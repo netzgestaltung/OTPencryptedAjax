@@ -1,5 +1,5 @@
 # OTPencryptedAjax
-increase http security with a one-time-PIN you calculate yourself. 
+Increase http security with a one-time-PIN you calculate yourself. 
 Ajax traffic will be -aes-256-cbc encrypted even before you send the password
 
 
@@ -12,7 +12,7 @@ The login screen looks like this:
      PIN:       ___________
                   [decrypt]
 
-after the user enters his username, he will be given a random number
+After the user enters his username, he will be given a random number
 in the challenge field. With the challenge the user doesn't have to 
 enter his secret PIN to the web-form. Instead he or she uses the 
 following algorithm to calculate a one-time PIN.
@@ -58,6 +58,8 @@ which makes it a hassle to calculate the one-time-PIN from,
 the AES encryption can easily be broken with a brute-force attack.
 It took me 0.2 seconds to find the key for a 8-digit PIN.
 Please write me, if you have any ideas.
+I just added the perl-script "calculate-OTP.pl", which can be used
+to calculate really long one-time-PINs.
 
 TODO
 
