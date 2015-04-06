@@ -59,3 +59,18 @@ the AES encryption can easily be broken with a brute-force attack.
 It took me 0.2 seconds to find the key for a 8-digit PIN.
 Please write me, if you have any ideas.
 
+TODO
+
+Calculate the SHA256sums of all javascript code within javascript
+code and transfer the results in the first encrypted request.
+The server can then warn the user with another avatar,
+if the code is injected with a backdoor.
+
+"But if a MITM can inject the javascript code, why can't he
+replace those ^^checks as well?", you might ask.
+
+Well yes, MITM could replace those checks and i.e. send some
+static SHA256sums instead, but it becomes really difficult
+for MITM to fake the correct SHA256sums, if the server varies
+the javascripts (and thereby the SHA256sums of those) slightly
+on every request.
