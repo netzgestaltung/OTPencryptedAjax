@@ -1,8 +1,6 @@
 # OTPencryptedAjax
 increase http security with a one-time-PIN you calculate yourself. 
 Ajax traffic will be -aes-256-cbc encrypted even before you send the password
-### Forked to edit html templates
-please use this repository: https://github.com/raph431/OTPencryptedAjax
 
 This is how it works:
 
