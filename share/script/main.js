@@ -52,21 +52,16 @@
    
   
   document.addEventListener('DOMContentLoaded', function(event) { 
-    var usernameInputs = document.getElementsByClassName('username'),
-        loginForm = document.getElementById('login'),
-        inputIndex;
+    var usernameInput = document.getElementById('login-username'),
+        loginForm = document.getElementById('login');
         
-    if ( usernameInputs.length > 0 ) {
-      for ( inputIndex in usernameInputs ) {
-        usernameInputs[inputIndex].addEventListener('blur', function(event) { 
-          var username = this.value;
-          
-          if ( username.length > 0 ) {
-            get_challenge(username);
-          }
-        });
+    usernameInput.addEventListener('blur', function(event) { 
+      var username = this.value;
+      
+      if ( username.length > 0 ) {
+        get_challenge(username);
       }
-    }
+    });
     
     loginForm.addEventListener('submit', function(event){
       decrypt_form(this);
