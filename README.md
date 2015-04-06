@@ -70,7 +70,7 @@ if the code is injected with a backdoor.
 replace those ^^checks as well?", you might ask.
 
 Well yes, MITM could replace those checks and i.e. send some
-static SHA256sums instead, but it becomes really difficult
+static SHA256sums instead, but it becomes more difficult
 for MITM to fake the correct SHA256sums, if the server varies
-the javascripts (and thereby the SHA256sums of those) slightly
-on every request.
+the javascripts (and thereby the SHA256sums of those)
+with every request.
