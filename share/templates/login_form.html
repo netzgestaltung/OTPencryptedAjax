@@ -1,166 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" >
-   <meta name="author" content="Raphael Wegmann">
-
-   <link rel="stylesheet" media="screen and (min-width: 720px)" 
-        href="styles.css" type="text/css" />
-
-   <script language="JavaScript" type="text/javascript" 
-                                  src="/ext/crypto/core.js"></script>
-   <script language="JavaScript" type="text/javascript" 
-                                  src="/ext/crypto/enc-base64.js"></script>
-   <script language="JavaScript" type="text/javascript" 
-                                  src="/ext/crypto/md5.js"></script>
-   <script language="JavaScript" type="text/javascript" 
-                                  src="/ext/crypto/evpkdf.js"></script>
-   <script language="JavaScript" type="text/javascript" 
-                                  src="/ext/crypto/cipher-core.js"></script>
-   <script language="JavaScript" type="text/javascript" 
-                                  src="/ext/crypto/aes.js"></script>
-   <script language="JavaScript" type="text/javascript" 
-                                  src="/ext/crypto/sha256.js"></script>
-
-   <script src="/ext/nanoajax.min.js"></script>
-
-
-<!-- the main javascript goes right here -->
-<script language="JavaScript" type="text/javascript">
-
-// this is the main program
-
-document.addEventListener("DOMContentLoaded", function(event) { 
-  var userobj = document.getElementById("username");
-  userobj.addEventListener("blur", function(event) { 
-     var uservalue = userobj.value;
-     if (uservalue.length > 0) {
-        get_challenge(uservalue);
-     }
-  });
-});
-
-function get_challenge (username) {
-  console.log("get_challenge() was called with "+username);
-  var username = document.getElementById("username").value;
-  nanoajax.ajax('/index.cgi?rm=get_challenge&username='+username, function (code, challenge) { 
-      console.log("rm=get_challenge?username .. returned code "+code);
-      if (code == 200) {
-          console.log("rm=get_challenge?username .. returned text "+challenge);
-          var res = JSON.parse(challenge);
-          document.getElementById("challenge").value = res.randomA;
-      }
- });
-}
-
-function decrypt_form(form) {
-
-  console.log("form e: " + (form));
-  var username = document.getElementById("username").value;
-  var pin      = document.getElementById("pin").value;
-  var client_ip = <!-- TMPL_VAR client_ip -->;
-
-// at this point we have no idea, whether our OTP is correct or not
-
-  var plaintext_request = '{"get": "password_field"}';
-  var hashed_pin = CryptoJS.SHA256(pin).toString().toUpperCase();
-
-  var crypted_request = CryptoJS.AES.encrypt(plaintext_request, hashed_pin).toString();
-  var request_string = crypted_request.replace('+', '#', 'g');
-
-  nanoajax.ajax({ url: '/index.cgi', method: 'POST', 
-           body: 'rm=enc_req&username='+username+'&DATA='+request_string},
-    function (code, HTML_CODE, request) { 
-      console.log("get password_field .. returned code "+code);
-      if (code == 200) {
-         var HTML_CODE_oneline = HTML_CODE.replace('\n', '', 'g');
-         var decrypted = CryptoJS.AES.decrypt(HTML_CODE_oneline, hashed_pin);
-         var plaintext = decrypted.toString(CryptoJS.enc.Latin1);
-         var otp_div  = document.getElementById("otp_div");
-         otp_div.innerHTML = plaintext;
-      }
-  });
-}
-
-
-</script>
-<!-- this is all the code necessary -->
-
-   <title>Hi2All</title>
+  <meta charset="UTF-8" />
+  <title>Hi2All</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="Raphael Wegmann" />
+  <link rel="stylesheet" media="screen and (min-width: 720px)" href="styles.css" type="text/css" />
+  <script class="js-crypto" type="text/javascript" src="/ext/crypto/core.js"></script>
+  <script class="js-crypto" type="text/javascript" src="/ext/crypto/enc-base64.js"></script>
+  <script class="js-crypto" type="text/javascript" src="/ext/crypto/md5.js"></script>
+  <script class="js-crypto" type="text/javascript" src="/ext/crypto/evpkdf.js"></script>
+  <script class="js-crypto" type="text/javascript" src="/ext/crypto/cipher-core.js"></script>
+  <script class="js-crypto" type="text/javascript" src="/ext/crypto/aes.js"></script>
+  <script class="js-crypto" type="text/javascript" src="/ext/crypto/sha256.js"></script>
+  <script class="js-nanoajax" type="text/javascript" src="/ext/nanoajax.min.js"></script>
+   
+  <!-- the main javascript goes right here -->
+  <script class="js-main" type="text/javascript" src="/share/script/main.js"></script>
+  <!-- this is all the code necessary -->
 </head>
 <body>
 
-<div id="welcome">
-  <h1>Hi2All.eu</h1>
-     <h2><!-- TMPL_VAR message --></h2>
-  Hi 2 all, who want to have private communication.
-  I am a software developer, who tries his best to create
-  a communication channel, that cannot be tapped into.
-</div>
-
-<div id="login">
-  <form id="login" method="post" onsubmit="decrypt_form(this); return false;">
-  <fieldset>
-    <legend id="login">
-       welcome back!
-    </legend>
-    <ul id="login">
-      <li>
-        <label for="username">username:
-      <br/>
-        <input id="username" name="username" size="20"></label>
-      </li>
-      <div id="otp_div">
-        <li>
-          <label for="challenge">challenge:
-        <br/>
-          <input id="challenge" name="challenge" size="10" readOnly="true"></label>
-        </li>
-        <li>
-          <label for="pin">PIN:
-        <br/>
-          <input id="pin" name="pin" size="10" type="password"></label>
-        </li>
-        <li>
-          <input id="decrypt_btn" name="decrypt_btn" type="submit" value="decrypt">
-        </li>
-      </div>
-    </ul>
-  </fieldset>
+  <section id="welcome">
+    <div class="inner">
+      <h1>Hi2All.eu</h1>
+      <h2><!-- TMPL_VAR message --></h2>
+      <p>Hi 2 all, who want to have private communication. <br />
+        I am a software developer, who tries his best to create
+        a communication channel, that cannot be tapped into.</p>
+    </div>
+  </section>
+  
+  <form id="login" class="login-form" method="post">
+    <fieldset class="inner">
+      <legend>welcome back!</legend>
+      <p><label for="login-username">username:</label>
+        <input id="login-username" name="login-username" class="username" size="20"></p>
+      <section id="otp">
+        <p><label for="challenge">challenge:</label>
+          <input id="challenge" name="challenge" class="challenge" size="10" readOnly="true"></p>
+        <p><label for="pin">PIN:</label>
+          <input id="pin" name="pin" size="10" type="password" class="pin password"></p>
+        <input id="decrypt_btn" name="decrypt_btn" type="submit" class="decrypt submit" value="decrypt">
+      </section>
+    </fieldset>
   </form>
-</div>
-
-<div id="register">
+  
   <form id="register" method="post" action="/register">
-  <fieldset>
-    <legend id="register">
-       new customer?
-    </legend>
-    <ul id="register">
-      <li>
-        <label for="username">username:
-      <br/>
-        <input name="username" size="20"></label>
-      </li>
-      <li>
-        <label for="password1">password:
-      <br/>
-        <input name="password1" size="20" type="password"></label>
-      </li>
-      <li>
-        <label for="password2">repeat password:
-      <br/>
-        <input name="password2" size="20" type="password"></label>
-      </li><li>
-        <input id="register" name="register" type="submit" value="register">
-      </li>
-    </ul>
-  </fieldset>
-  </form>
-
-</div>
-
+    <fieldset class="inner">
+      <legend>new customer?</legend>
+      <ul>
+        <li>
+          <label for="register-username">username:</label>
+          <input id="register-username" name="register-username" class="username" size="20">
+        </li>
+        <li>
+          <label for="register-password1">password:</label>
+          <input name="register-password1" size="20" type="password" class="password password1">
+        </li>
+        <li>
+          <label for="register-password2">repeat password:</label>
+          <input name="register-password2" size="20" type="password" class="password password2">
+        </li><li>
+          <input id="register-submit" name="register-submit" type="submit" value="register" class="submit">
+        </li>
+      </ul>
+    </fieldset>
+    </form>
+  
 </body>
 </html>
 
