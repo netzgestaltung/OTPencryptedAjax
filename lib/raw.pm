@@ -32,6 +32,8 @@ use Crypt::CBC;
 use Crypt::Cipher::AES;
 use MIME::Base64 qw( encode_base64 decode_base64 );
 use JSON::XS;
+use Fcntl;   # For O_RDWR, O_CREAT, etc.
+use NDBM_File;
 
 
 =head1 VERSION
@@ -91,8 +93,8 @@ sub setup {
     $self->authen->config(
 #                                vvv  DRIVER name, before the password file
                     DRIVER => [ 'OneTimePIN', $ENV{PWD}.'/etc/onetimepin',
-                                              $ENV{PWD}.'/etc/avatare',
-                                              $ENV{PWD}.'/etc/unknown_pins',
+                                              $ENV{PWD}.'/etc/avatare/',
+                                              $ENV{PWD}.'/etc/unknown_users',
 ],
                      STORE => 'Session',
              LOGIN_RUNMODE => 'login_form',
@@ -182,12 +184,14 @@ sub login_form {
 
 
 sub error {
-    my ($self) = @_;
+    my $self = shift;
+    my $error_msg = shift;
 
     $self->log->info("in error()");
+    $self->log->info("error params: [".(Dumper @_)."]");
     $self->log->debug("dumping self->query dump: [".(Dumper $self->dump())."]");
     my $template = $self->load_tmpl('error.html');
-    $template->param( message => 'Some error occured!',
+    $template->param( message => $error_msg,
                     error_msg => 'failed in runmode: '.$self->dump());
     return $template->output;
 }
@@ -208,6 +212,12 @@ sub get_challenge {
     $self->log->info("in get_challenge()");
     my $username = $self->query->param("username");
     $self->log->info("the username (".$username.")");
+    my @options = $self->authen->drivers->options;
+    $self->log->info("opening file: [".($options[2])."]");
+    my %UNKNOWN_USERS;
+    tie(%UNKNOWN_USERS, 'NDBM_File', $options[2],  O_RDWR|O_CREAT, 0666)
+       or $self->log->error( "Couldn't tie NDBM file ".($options[2])
+                                                   .": $!; aborting");
 
     my ($num_digits, $randomA, $secretPIN);
     if ($secretPIN = $self->authen->drivers->{secretPIN}->{$username}) {
@@ -216,7 +226,14 @@ sub get_challenge {
        $num_digits = length $secretPIN;
        $randomA = sprintf "%0${num_digits}d", int(rand()*10**$num_digits);
     } else { # username is unknown, we return some random length randomA
-       $num_digits = 3+int(rand()*4);
+       if ((defined $UNKNOWN_USERS{$username}) &&
+                   ($UNKNOWN_USERS{$username} > 3)) {
+          $num_digits = $UNKNOWN_USERS{$username};
+       } else {
+          $num_digits = 4+int(rand()*20);
+          $UNKNOWN_USERS{$username} = $num_digits;
+       }
+       untie %UNKNOWN_USERS;
        $randomA = sprintf "%0${num_digits}d", int(rand()*10**$num_digits);
        return "{\"randomA\": \"$randomA\"}";
     }
@@ -245,11 +262,11 @@ sub get_challenge {
 
 =head3 enc_req
 
-   this function receives an encrypted request
-   and decrypts it using AES and the OTP
+   this function receives an encrypted request,
+   decrypts it using AES and the OTP and
+   sends an encrypted reply
 
 =cut
-
 
 sub enc_req {
     my ($self) = @_;
@@ -276,17 +293,16 @@ sub enc_req {
     if ($req_json->{"get"} eq "password_field") { 
        my $template = $self->load_tmpl('password_field.html');
        # my $options = @{$self->authen->drivers->options}[1];
-       my @options = @{$self->authen->drivers->{options}};
-       $self->log->info("options: [".(@options)."]");
-       my $filename = $ENV{PWD}.'/etc/avatare/'.$username.'.jpeg';
+       my @options = $self->authen->drivers->options;
+       $self->log->info("options: [".($options[1])."]");
+       my $filename = $options[1].$username.'.jpeg';
        $self->log->info("opening avatar img: [".$filename."]");
-       open (my $img_fh, '<', $ENV{PWD}.'/etc/avatare/'.$username.'.jpeg')
+       open (my $img_fh, '<', $filename)
        or $self->log->error("couldn't open avatar img: [".$filename."]");
        my $img = do { local $/; <$img_fh> };
        close $img_fh;
        $template->param( avatar_b64 => encode_base64 $img );
        my $rsp = encode_base64($c->encrypt($template->output));
-       $self->log->info("the response [".(Dumper $rsp)."]");
        return $rsp;
     }
 
