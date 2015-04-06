@@ -51,14 +51,14 @@
       };
    
   
-  document.addEventListener("DOMContentLoaded", function(event) { 
-    var usernameInputs = document.getElementsByClassName("username"),
+  document.addEventListener('DOMContentLoaded', function(event) { 
+    var usernameInputs = document.getElementsByClassName('username'),
         loginForm = document.getElementById('login'),
         inputIndex;
         
     if ( usernameInputs.length > 0 ) {
       for ( inputIndex in usernameInputs ) {
-        usernameInputs[inputIndex].addEventListener("blur", function(event) { 
+        usernameInputs[inputIndex].addEventListener('blur', function(event) { 
           var username = this.value;
           
           if ( username.length > 0 ) {
