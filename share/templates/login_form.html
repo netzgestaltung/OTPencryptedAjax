@@ -34,13 +34,13 @@
   <form id="login" class="login-form" method="post">
     <fieldset class="inner">
       <legend>welcome back!</legend>
-      <p><label for="login-username">username:</label>
-        <input id="login-username" name="login-username" class="username" size="20"></p>
+      <label for="login-username">username:<br/>
+        <input id="login-username" name="login-username" class="username" size="20"></label>
       <section id="otp">
-        <p><label for="challenge">challenge:</label>
-          <input id="challenge" name="challenge" class="challenge" size="10" readOnly="true"></p>
-        <p><label for="pin">PIN:</label>
-          <input id="pin" name="pin" size="10" type="password" class="pin password"></p>
+        <label for="challenge">challenge:<br/>
+          <input id="challenge" name="challenge" class="challenge" size="20" readOnly="true"></label><br/>
+        <label for="pin">PIN:<br/>
+          <input id="pin" name="pin" size="20" type="password" class="pin password"></label>
         <input id="decrypt_btn" name="decrypt_btn" type="submit" class="decrypt submit" value="decrypt">
       </section>
     </fieldset>
@@ -49,20 +49,20 @@
   <form id="register" method="post" action="/register">
     <fieldset class="inner">
       <legend>new customer?</legend>
-      <ul>
+      <ul id="register_list">
         <li>
-          <label for="register-username">username:</label>
-          <input id="register-username" name="register-username" class="username" size="20">
+          <label for="register-username">username:<br/>
+          <input id="register-username" name="register-username" size="20"></label>
         </li>
         <li>
-          <label for="register-password1">password:</label>
-          <input name="register-password1" size="20" type="password" class="password password1">
+          <label for="register-password1">password:<br/>
+          <input name="register-password1" size="20" type="password"></label>
         </li>
         <li>
-          <label for="register-password2">repeat password:</label>
-          <input name="register-password2" size="20" type="password" class="password password2">
+          <label for="register-password2">repeat password:<br/>
+          <input name="register-password2" size="20" type="password"></label>
         </li><li>
-          <input id="register-submit" name="register-submit" type="submit" value="register" class="submit">
+          <input id="register-submit" name="register-submit" type="submit" value="register">
         </li>
       </ul>
     </fieldset>
