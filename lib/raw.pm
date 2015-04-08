@@ -35,14 +35,18 @@ use JSON::XS;
 use Fcntl;   # For O_RDWR, O_CREAT, etc.
 use NDBM_File;
 
+use Test::File::ShareDir
+    -share => {
+        -dist   => { 'raw' => '/home/raphael/src/OTPencryptedAjax' }
+    };
 
 =head1 VERSION
 
-This document describes raw Version 0.01
+This document describes raw Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
@@ -62,12 +66,6 @@ TODO: change all these values to ones more appropriate for your application.
 
 =cut
 
-sub dist_dir {
-  my $project = shift;
-  if ($project eq "raw") {
-     return "/home/raphael/src/OTPencryptedAjax";
-  }
-}
 
 sub setup {
     my ($self) = @_;
@@ -307,7 +305,7 @@ sub enc_req {
        # my $options = @{$self->authen->drivers->options}[1];
        my @options = $self->authen->drivers->options;
        $self->log->info("options: [".($options[1])."]");
-       my $filename = $options[1].$username.'.jpeg';
+       my $filename = $options[1].'/'.$username.'.jpeg';
        $self->log->info("opening avatar img: [".$filename."]");
        open (my $img_fh, '<', $filename)
        or $self->log->error("couldn't open avatar img: [".$filename."]");
