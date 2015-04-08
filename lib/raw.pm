@@ -62,16 +62,24 @@ TODO: change all these values to ones more appropriate for your application.
 
 =cut
 
+sub dist_dir {
+  my $project = shift;
+  if ($project eq "raw") {
+     return "/home/raphael/src/OTPencryptedAjax";
+  }
+}
+
 sub setup {
     my ($self) = @_;
 
     # calling log_config is optional as
     # some simple defaults will be used
+
     $self->log_config(
       LOG_DISPATCH_MODULES => [ 
         {    module => 'Log::Dispatch::File',
                name => 'debug',
-           filename => '/home/raphael/tmp/debug.log',
+           filename => File::Spec->catfile(dist_dir('raw'), 'var', 'log', 'debug.log'),
           min_level => 'debug',
             newline => 1,
         },
@@ -80,7 +88,10 @@ sub setup {
 
     # Configure the session
     $self->session_config(
-       CGI_SESSION_OPTIONS => [ "driver:sqlite", $self->query||$self->session->id, {Directory=>'/home/raphael/tmp'} ],
+       CGI_SESSION_OPTIONS => [ "driver:sqlite", 
+                                $self->query||$self->session->id, 
+           { Directory => File::Spec->catdir(dist_dir('raw'),'var','tmp') }
+                              ],
        DEFAULT_EXPIRY      => '+1w',
        COOKIE_PARAMS       => {
                                 -domain => 'localhost',
@@ -92,10 +103,11 @@ sub setup {
 
     $self->authen->config(
 #                                vvv  DRIVER name, before the password file
-                    DRIVER => [ 'OneTimePIN', $ENV{PWD}.'/etc/onetimepin',
-                                              $ENV{PWD}.'/etc/avatare/',
-                                              $ENV{PWD}.'/etc/unknown_users',
-],
+                    DRIVER => [ 'OneTimePIN',
+            File::Spec->catfile(dist_dir('raw'), 'etc', 'onetimepin'),
+            File::Spec->catdir( dist_dir('raw'), 'etc', 'avatars'),
+            File::Spec->catfile(dist_dir('raw'), 'etc', 'unknown_users'),
+                              ],
                      STORE => 'Session',
              LOGIN_RUNMODE => 'login_form',
         POST_LOGIN_RUNMODE => 'auth_welcome',
@@ -178,7 +190,7 @@ sub login_form {
 
     my $template = $self->load_tmpl;
     $template->param( message => "Welcome $ENV{'REMOTE_HOST'}" );
-    $template->param( client_ip => "\"$ENV{'REMOTE_HOST'}\"" );
+    # $template->param( client_ip => "\"$ENV{'REMOTE_HOST'}\"" );
     return $template->output;
 }
 
