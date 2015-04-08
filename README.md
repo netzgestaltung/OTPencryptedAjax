@@ -21,17 +21,18 @@ For example if challenge = 306 and the users secret PIN = 810,
 I calculate the one-time-PIN by first adding the numbers digit-by-digit
 without carry (modulo 10):
 
-     (3 + 8)%10 = 1
-      0 + 1     = 1
-      6 + 0     = 6
+     challenge:  3 0 6
+     secret PIN: 8 1 0
+     =================
+     digit sum:  1+1+6 = 8 ... one-time PIN
 
 and in the second step I add those results together.
 So in this case the one-time-PIN would be 8.
 
 After the user enters the PIN and presses [decrypt] he or she will see 
 his or her avatar (ensuring the user is not connected to a fake website) 
-and a password input field at the place, 
-where the "challenge" and "PIN" fields have been before.
+and a password input field at the place, where the "challenge" and "PIN" 
+fields have been before.
 
 
      username:  ___________
