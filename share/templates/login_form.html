@@ -16,7 +16,7 @@
   <script class="js-nanoajax" type="text/javascript" src="/ext/nanoajax.min.js"></script>
    
   <!-- the main javascript goes right here -->
-  <script class="js-main" type="text/javascript" src="/share/script/main.js"></script>
+  <script class="js-main" type="text/javascript" src="/script/main.js"></script>
   <!-- this is all the code necessary -->
 </head>
 <body>
@@ -32,11 +32,12 @@
   </section>
   
   <form id="login" class="login-form" method="post">
+
     <fieldset class="inner">
       <legend>welcome back!</legend>
       <label for="login-username">username:<br/>
         <input id="login-username" name="login-username" class="username" size="20"></label>
-      <section id="otp">
+      <section id="otp-section">
         <label for="challenge">challenge:<br/>
           <input id="challenge" name="challenge" class="challenge" size="20" readOnly="true"></label><br/>
         <label for="pin">PIN:<br/>
