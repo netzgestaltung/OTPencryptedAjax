@@ -309,7 +309,7 @@ sub enc_req {
 
 # TODO calculate the hash on the server
     if (($req_json->{"get"} eq "password_field") 
-    && ($req_json->{"hash"} eq "d30f9a3371f74e79d0161857cefdd9ecf6d834c26e51bb5c927b3e377f19ae2c")) { 
+    && ($req_json->{"hash"} eq "d40a8c3465f5fcb1407e2c77a5768c22abcc6e6ad6f6ca4d903050ef25b2b6fb")) { 
        my $template = $self->load_tmpl('password_field.html');
        # my $options = @{$self->authen->drivers->options}[1];
        my @options = $self->authen->drivers->options;
