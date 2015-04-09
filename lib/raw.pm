@@ -32,15 +32,22 @@ use Crypt::CBC;
 use Crypt::Cipher::AES;
 use MIME::Base64 qw( encode_base64 decode_base64 );
 use JSON::XS;
+use Fcntl;   # For O_RDWR, O_CREAT, etc.
+use NDBM_File;
+use Math::Random::ISAAC::XS;
 
+use Test::File::ShareDir
+    -share => {
+        -dist   => { 'raw' => '/home/raphael/src/OTPencryptedAjax' }
+    };
 
 =head1 VERSION
 
-This document describes raw Version 0.01
+This document describes raw Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
@@ -60,16 +67,18 @@ TODO: change all these values to ones more appropriate for your application.
 
 =cut
 
+
 sub setup {
     my ($self) = @_;
 
     # calling log_config is optional as
     # some simple defaults will be used
+
     $self->log_config(
       LOG_DISPATCH_MODULES => [ 
         {    module => 'Log::Dispatch::File',
                name => 'debug',
-           filename => '/home/raphael/tmp/debug.log',
+           filename => File::Spec->catfile(dist_dir('raw'), 'var', 'log', 'debug.log'),
           min_level => 'debug',
             newline => 1,
         },
@@ -78,7 +87,10 @@ sub setup {
 
     # Configure the session
     $self->session_config(
-       CGI_SESSION_OPTIONS => [ "driver:sqlite", $self->query||$self->session->id, {Directory=>'/home/raphael/tmp'} ],
+       CGI_SESSION_OPTIONS => [ "driver:sqlite", 
+                                $self->query||$self->session->id, 
+           { Directory => File::Spec->catdir(dist_dir('raw'),'var','tmp') }
+                              ],
        DEFAULT_EXPIRY      => '+1w',
        COOKIE_PARAMS       => {
                                 -domain => 'localhost',
@@ -90,10 +102,11 @@ sub setup {
 
     $self->authen->config(
 #                                vvv  DRIVER name, before the password file
-                    DRIVER => [ 'OneTimePIN', $ENV{PWD}.'/etc/onetimepin',
-                                              $ENV{PWD}.'/etc/avatare',
-                                              $ENV{PWD}.'/etc/unknown_pins',
-],
+                    DRIVER => [ 'OneTimePIN',
+            File::Spec->catfile(dist_dir('raw'), 'etc', 'onetimepin'),
+            File::Spec->catdir( dist_dir('raw'), 'etc', 'avatars'),
+            File::Spec->catfile(dist_dir('raw'), 'etc', 'unknown_users'),
+                              ],
                      STORE => 'Session',
              LOGIN_RUNMODE => 'login_form',
         POST_LOGIN_RUNMODE => 'auth_welcome',
@@ -128,7 +141,8 @@ sub setup {
        $str2 .= $str1;
     }
     close $random;
-    srand( time ^ $$ ^ hex((unpack "H*", $str2)) );
+    $self->{'rng'} = Math::Random::ISAAC::XS->new(time, $$, hex(unpack "H*", $str2));
+
  
     return;
 }
@@ -173,21 +187,29 @@ sub login_form {
     $self->log->info("in login_form()");
     $self->log->info("remote host $ENV{'REMOTE_HOST'} connected from port $ENV{'REMOTE_PORT'}");
 #    $self->log->debug("dumping self->dump: [".(Dumper $self->dump())."]");
+    my $styles = $self->load_tmpl("styles.css");
+    my $nanoajax = $self->load_tmpl("nanoajax.html");
+    my $hex_sha256 = $self->load_tmpl("hex_sha256.html");
 
     my $template = $self->load_tmpl;
     $template->param( message => "Welcome $ENV{'REMOTE_HOST'}" );
-    $template->param( client_ip => "\"$ENV{'REMOTE_HOST'}\"" );
+    $template->param( styles => $styles->output );
+    $template->param( nanoajax => $nanoajax->output );
+    $template->param( hex_sha256 => $hex_sha256->output );
+    # $template->param( client_ip => "\"$ENV{'REMOTE_HOST'}\"" );
     return $template->output;
 }
 
 
 sub error {
-    my ($self) = @_;
+    my $self = shift;
+    my $error_msg = shift;
 
     $self->log->info("in error()");
+    $self->log->info("error params: [".(Dumper @_)."]");
     $self->log->debug("dumping self->query dump: [".(Dumper $self->dump())."]");
     my $template = $self->load_tmpl('error.html');
-    $template->param( message => 'Some error occured!',
+    $template->param( message => $error_msg,
                     error_msg => 'failed in runmode: '.$self->dump());
     return $template->output;
 }
@@ -202,22 +224,53 @@ sub error {
 
 =cut
 
+sub get_random_number {
+   my $self = shift;
+   my $num_digits = shift;
+   my $randomA = "";
+   while ($num_digits > 0) {
+      my $rand = $self->{'rng'}->irand();
+      $self->log->info("rand [".($rand)."]");
+      if ($num_digits > 9) {
+         $randomA .= sprintf "%09d", $rand;
+         $num_digits -= 9;
+      } else {
+         $randomA .= sprintf '%0.*s', $num_digits, $rand;
+         $num_digits = 0;
+      }
+   }
+   return $randomA;
+}
 
 sub get_challenge {
     my ($self) = @_;
     $self->log->info("in get_challenge()");
     my $username = $self->query->param("username");
     $self->log->info("the username (".$username.")");
+    my @options = $self->authen->drivers->options;
+    $self->log->info("opening file: [".($options[2])."]");
+    my %UNKNOWN_USERS;
+    tie(%UNKNOWN_USERS, 'NDBM_File', $options[2],  O_RDWR|O_CREAT, 0666)
+       or $self->log->error( "Couldn't tie NDBM file ".($options[2])
+                                                   .": $!; aborting");
 
     my ($num_digits, $randomA, $secretPIN);
     if ($secretPIN = $self->authen->drivers->{secretPIN}->{$username}) {
        $self->log->info("the secretPIN (".($secretPIN).")");
        #my $num_digits = length sprintf "%d", $secretPIN;
        $num_digits = length $secretPIN;
-       $randomA = sprintf "%0${num_digits}d", int(rand()*10**$num_digits);
+       $randomA = $self->get_random_number($num_digits);
+       $self->log->info("the randomA (".($randomA).")");
     } else { # username is unknown, we return some random length randomA
-       $num_digits = 3+int(rand()*4);
-       $randomA = sprintf "%0${num_digits}d", int(rand()*10**$num_digits);
+       if ((defined $UNKNOWN_USERS{$username}) &&
+                   ($UNKNOWN_USERS{$username} > 3)) {
+          $num_digits = $UNKNOWN_USERS{$username};
+       } else {
+          $num_digits = 4+int($self->{'rng'}->rand()*15);
+          $UNKNOWN_USERS{$username} = $num_digits;
+       }
+       untie %UNKNOWN_USERS;
+       $randomA = $self->get_random_number($num_digits);
        return "{\"randomA\": \"$randomA\"}";
     }
     $self->authen->drivers->{OneTimePIN}->{users}->{$username}->{randomA} = $randomA;
@@ -245,11 +298,11 @@ sub get_challenge {
 
 =head3 enc_req
 
-   this function receives an encrypted request
-   and decrypts it using AES and the OTP
+   this function receives an encrypted request,
+   decrypts it using AES and the OTP and
+   sends an encrypted reply
 
 =cut
-
 
 sub enc_req {
     my ($self) = @_;
@@ -273,20 +326,22 @@ sub enc_req {
     $self->log->info("the plaintext [".$plaintext."]");
     my $req_json = decode_json $plaintext;
     $self->log->info("the json [".(Dumper %{$req_json})."]");
-    if ($req_json->{"get"} eq "password_field") { 
+
+# TODO calculate the hash on the server
+    if (($req_json->{"get"} eq "password_field") 
+    && ($req_json->{"hash"} eq "ebb42044d6fb993a5b6fcb01ca6aa02fe972adf555153a7326ce49944cd166b5")) { 
        my $template = $self->load_tmpl('password_field.html');
        # my $options = @{$self->authen->drivers->options}[1];
-       my @options = @{$self->authen->drivers->{options}};
-       $self->log->info("options: [".(@options)."]");
-       my $filename = $ENV{PWD}.'/etc/avatare/'.$username.'.jpeg';
+       my @options = $self->authen->drivers->options;
+       $self->log->info("options: [".($options[1])."]");
+       my $filename = $options[1].'/'.$username.'.jpeg';
        $self->log->info("opening avatar img: [".$filename."]");
-       open (my $img_fh, '<', $ENV{PWD}.'/etc/avatare/'.$username.'.jpeg')
+       open (my $img_fh, '<', $filename)
        or $self->log->error("couldn't open avatar img: [".$filename."]");
        my $img = do { local $/; <$img_fh> };
        close $img_fh;
        $template->param( avatar_b64 => encode_base64 $img );
        my $rsp = encode_base64($c->encrypt($template->output));
-       $self->log->info("the response [".(Dumper $rsp)."]");
        return $rsp;
     }
 

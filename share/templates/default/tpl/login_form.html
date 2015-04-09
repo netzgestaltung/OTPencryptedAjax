@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hi2All</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author"   content="Raphael Wegmann" />
+
+<style  media="screen and (min-width: 720px)" type="text/css">
+<!-- TMPL_VAR styles -->
+</style>
+
+<!-- secure javascript loading starts here -->
+<script type="text/javascript">
+
+<!-- TMPL_VAR nanoajax -->
+
+<!-- TMPL_VAR hex_sha256 -->
+
+// now we have nanoajax and hex_sha256() and can start loading
+// the rest of the scripts
+
+
+// In order to avoid polluting global scope aka the window object,
+// I create my own namespace OTPencryptedAjax:
+
+// this is where we store the hashes
+var OTPencryptedAjax = { myHashes: {} };
+
+;(function(nanoajax, hex_sha256){
+
+  // first we hash the document itself
+  OTPencryptedAjax.myHashes["/index.cgi"] = hex_sha256(document.documentElement.outerHTML);
+  
+  var oHead = document.getElementsByTagName('head').item(0);
+  
+  var load_script = function (oea, na, path, fn) {
+    na.ajax(path+fn, function (code, script_src, url) { 
+      console.log("nanoajax getting http status code [" + code + "]");
+      if ( code == 200 ) {
+         var file = url.replace(path,"");
+         oea.myHashes[path+file] = hex_sha256(script_src);
+         console.log("load_script() stored hash ["
+            +oea.myHashes[path+file]+ "] for file [" +path+file+ "]");
+         var oScript = document.createElement( "script" );
+         oScript.type = "text/javascript";
+         oScript.id = file.replace(".js", "-id");
+         oScript.text = script_src;
+         oHead.appendChild( oScript );
+      }
+    });
+  };
+  
+  var cryptoJsDir = "/ext/crypto/";
+  var flist = ["core.js", "enc-base64.js", "md5.js", "evpkdf.js", 
+               "cipher-core.js", "aes.js", "sha256.js"];
+  for (f in flist) {
+     load_script(OTPencryptedAjax, nanoajax, cryptoJsDir, flist[f]);
+  }
+  
+  // last but not least, we have to load our own main.js
+  load_script(OTPencryptedAjax, nanoajax, '/script/', 'main.js');
+
+})(nanoajax, hex_sha256);
+
+</script>
+
+  <!-- this is all the code necessary -->
+</head>
+<body>
+
+  <section id="welcome">
+    <div class="inner">
+      <h1>Hi2All.eu</h1>
+      <h2><!-- TMPL_VAR message --></h2>
+      <p>Hi 2 all, who want to have private communication. <br />
+        I am a software developer, who tries his best to create
+        a communication channel, that cannot be tapped into.</p>
+    </div>
+  </section>
+  
+  <form id="login" class="login-form" method="post">
+
+    <fieldset class="inner">
+      <legend>welcome back!</legend>
+      <label for="login-username">username:<br/>
+        <input id="login-username" name="login-username" class="username" size="20"></label>
+      <section id="otp-section">
+        <label for="challenge">challenge:<br/>
+          <input id="challenge" name="challenge" class="challenge" size="20" readOnly="true"></label><br/>
+        <label for="pin">PIN:<br/>
+          <input id="pin" name="pin" size="20" type="password" class="pin password"></label>
+        <input id="decrypt_btn" name="decrypt_btn" type="submit" class="decrypt submit" value="decrypt">
+      </section>
+    </fieldset>
+  </form>
+  
+  <form id="register" method="post" action="/register">
+    <fieldset class="inner">
+      <legend>new customer?</legend>
+      <ul id="register_list">
+        <li>
+          <label for="register-username">username:<br/>
+          <input id="register-username" name="register-username" size="20"></label>
+        </li>
+        <li>
+          <label for="register-password1">password:<br/>
+          <input name="register-password1" size="20" type="password"></label>
+        </li>
+        <li>
+          <label for="register-password2">repeat password:<br/>
+          <input name="register-password2" size="20" type="password"></label>
+        </li><li>
+          <input id="register-submit" name="register-submit" type="submit" value="register">
+        </li>
+      </ul>
+    </fieldset>
+    </form>
+  
+</body>
+</html>
+

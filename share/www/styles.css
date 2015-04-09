@@ -8,28 +8,22 @@ div#welcome {
    height: 140px;
 }
 
-div#login {
+form#login {
    position: absolute;
    top: 180px;
    width: 400px;
-}
-ul#login {
-   list-style-type: none;
 }
 input#login_btn {
    float: right;
 }
 
-div#register {
+form#register {
    position: absolute;
    left: 420px;
    top: 180px;
    width: 400px;
 }
-ul#register {
-   list-style-type: none;
-}
-input#register {
+input#register-submit {
    float: right;
 }
 
@@ -40,5 +34,9 @@ input#decrypt_btn {
 img#avatar {
    width: 170px;
    height: 170px;
+}
+
+ul#register_list {
+   list-style-type: none;
 }
 

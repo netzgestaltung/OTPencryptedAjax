@@ -12,7 +12,7 @@ my $app = raw->new(
 );
 
 my $server = CGI::Application::Server->new();
-$server->document_root('./t/www');
+$server->document_root('./share/www');
 $server->entry_points({
     '/index.cgi' => $app,
 });
