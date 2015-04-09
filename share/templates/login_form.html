@@ -5,172 +5,53 @@
   <title>Hi2All</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="author"   content="Raphael Wegmann" />
-  <link rel="stylesheet" media="screen and (min-width: 720px)" href="styles.css" type="text/css" />
-   
-  <!-- the main javascript goes right here -->
-<!--
-  <script class="js-main" type="text/javascript" src="/script/main.js"></script>
--->
 
-  <!-- secure javascript loading starts here -->
+<style  media="screen and (min-width: 720px)" type="text/css">
+<!-- TMPL_VAR styles -->
+</style>
+
+<!-- secure javascript loading starts here -->
 <script type="text/javascript">
-/* 
- * nanoajax from https://github.com/yanatan16/nanoajax
- */
 
-var nanoajax = new Object;
+<!-- TMPL_VAR nanoajax -->
 
-nanoajax.ajax = function (params, callback) {
-  if (typeof params == 'string') params = {url: params}
-  var headers = params.headers || {}
-    , body = params.body
-    , method = params.method || (body ? 'POST' : 'GET')
-    , withCredentials = params.withCredentials || false
+<!-- TMPL_VAR hex_sha256 -->
 
-  var req = getRequest()
-
-  // has no effect in IE
-  // has no effect for same-origin requests
-  // has no effect in CORS if user has disabled 3rd party cookies
-  req.withCredentials = withCredentials
-
-  req.onreadystatechange = function () {
-    if (req.readyState == 4)
-      callback(req.status, req.responseText, params.url)
-  }
-
-  if (body) {
-    setDefault(headers, 'X-Requested-With', 'XMLHttpRequest')
-    setDefault(headers, 'Content-Type', 'application/x-www-form-urlencoded')
-  }
-
-  req.open(method, params.url, true)
-
-  for (var field in headers)
-    req.setRequestHeader(field, headers[field])
-
-  req.send(body)
-}
-
-function getRequest() {
-  if (XMLHttpRequest)
-    return new XMLHttpRequest;
-  else
-    try { return new ActiveXObject("MSXML2.XMLHTTP.3.0"); } catch(e) {}
-  throw new Error('no xmlhttp request able to be created')
-}
-
-function setDefault(obj, key, value) {
-  obj[key] = obj[key] || value
-}
-
-/**
- * JS Implementation of MurmurHash3 (r136) (as of May 20, 2011)
- * 
- * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @see http://github.com/garycourt/murmurhash-js
- * @author <a href="mailto:aappleby@gmail.com">Austin Appleby</a>
- * @see http://sites.google.com/site/murmurhash/
- * 
- * @param {string} key ASCII only
- * @param {number} seed Positive integer only
- * @return {number} 32-bit positive integer hash 
- */
-
-function murmurhash3(key, seed) {
-	var remainder, bytes, h1, h1b, c1, c1b, c2, c2b, k1, i;
-	
-	remainder = key.length & 3; // key.length % 4
-	bytes = key.length - remainder;
-	h1 = seed;
-	c1 = 0xcc9e2d51;
-	c2 = 0x1b873593;
-	i = 0;
-	
-	while (i < bytes) {
-	  	k1 = 
-	  	  ((key.charCodeAt(i) & 0xff)) |
-	  	  ((key.charCodeAt(++i) & 0xff) << 8) |
-	  	  ((key.charCodeAt(++i) & 0xff) << 16) |
-	  	  ((key.charCodeAt(++i) & 0xff) << 24);
-		++i;
-		
-		k1 = ((((k1 & 0xffff) * c1) + ((((k1 >>> 16) * c1) & 0xffff) << 16))) & 0xffffffff;
-		k1 = (k1 << 15) | (k1 >>> 17);
-		k1 = ((((k1 & 0xffff) * c2) + ((((k1 >>> 16) * c2) & 0xffff) << 16))) & 0xffffffff;
-
-		h1 ^= k1;
-        h1 = (h1 << 13) | (h1 >>> 19);
-		h1b = ((((h1 & 0xffff) * 5) + ((((h1 >>> 16) * 5) & 0xffff) << 16))) & 0xffffffff;
-		h1 = (((h1b & 0xffff) + 0x6b64) + ((((h1b >>> 16) + 0xe654) & 0xffff) << 16));
-	}
-	
-	k1 = 0;
-	
-	switch (remainder) {
-		case 3: k1 ^= (key.charCodeAt(i + 2) & 0xff) << 16;
-		case 2: k1 ^= (key.charCodeAt(i + 1) & 0xff) << 8;
-		case 1: k1 ^= (key.charCodeAt(i) & 0xff);
-		
-		k1 = (((k1 & 0xffff) * c1) + ((((k1 >>> 16) * c1) & 0xffff) << 16)) & 0xffffffff;
-		k1 = (k1 << 15) | (k1 >>> 17);
-		k1 = (((k1 & 0xffff) * c2) + ((((k1 >>> 16) * c2) & 0xffff) << 16)) & 0xffffffff;
-		h1 ^= k1;
-	}
-	
-	h1 ^= key.length;
-
-	h1 ^= h1 >>> 16;
-	h1 = (((h1 & 0xffff) * 0x85ebca6b) + ((((h1 >>> 16) * 0x85ebca6b) & 0xffff) << 16)) & 0xffffffff;
-	h1 ^= h1 >>> 13;
-	h1 = ((((h1 & 0xffff) * 0xc2b2ae35) + ((((h1 >>> 16) * 0xc2b2ae35) & 0xffff) << 16))) & 0xffffffff;
-	h1 ^= h1 >>> 16;
-
-	return h1 >>> 0;
-}
-
-// now we have nanoajax and murmurhash3() and can start loading
+// now we have nanoajax and hex_sha256() and can start loading
 // the rest of the scripts
+
+var myHashes = new Object; // this is where we store the hashes
+// first we hash the document itself
+myHashes["/index.cgi"] = hex_sha256(document.documentElement.outerHTML);
+
+var oHead = document.getElementsByTagName('head').item(0);
+
+function load_script(directory, filename) {
+  nanoajax.ajax(directory+filename, function (code, script_src, url) { 
+    console.log("nanoajax getting script returned code [" + code + "]");
+    if ( code == 200 ) {
+       // console.log("nanoajax getting script returned [" + script_src +"]");
+       var filename = url.replace(directory,"");
+       myHashes[directory+filename] = hex_sha256(script_src);
+       console.log("nanoajax hashing script returned [" + myHashes[directory+filename] +"]");
+       console.log("nanoajax script [" + filename +"] returned");
+       var oScript = document.createElement( "script" );
+       oScript.type = "text/javascript";
+       oScript.id = filename.replace(".js", "-id");
+       oScript.text = script_src;
+       oHead.appendChild( oScript );
+    }
+  });
+}
 
 var cryptoJsDir = "/ext/crypto/";
 var flist = ["core.js", "enc-base64.js", "md5.js", "evpkdf.js", "cipher-core.js", "aes.js", "sha256.js"];
-var myHashes = new Object;
-var oHead = document.getElementsByTagName('head').item(0);
 for (f in flist) {
-  nanoajax.ajax(cryptoJsDir+flist[f], function (code, script_src, url) { 
-    console.log("nanoajax getting script returned code [" + code + "]");
-    if ( code == 200 ) {
-       // console.log("nanoajax getting script returned [" + script_src +"]");
-       var filename = url.replace(cryptoJsDir,"");
-       myHashes[url] = murmurhash3(script_src, 24);
-       console.log("murmurhash3 returned [" + myHashes[url] +"]");
-       console.log("nanoajax getting script returned [" + filename +"]");
-       var oScript = document.createElement( "script" );
-       oScript.type = "text/javascript";
-       oScript.id = filename.replace(".js", "-id");
-       oScript.text = script_src;
-       oHead.appendChild( oScript );
-    }
-  });
+  load_script(cryptoJsDir, flist[f]);
 }
 
 // last but not least, we have to load our own main.js
-
-  nanoajax.ajax("/script/main.js", function (code, script_src, url) { 
-    console.log("nanoajax getting script returned code [" + code + "]");
-    if ( code == 200 ) {
-       // console.log("nanoajax getting script returned [" + script_src +"]");
-       var filename = url.replace("/script/","");
-       myHashes[url] = murmurhash3(script_src, 24);
-       console.log("murmurhash3 returned [" + myHashes[url] +"]");
-       console.log("nanoajax getting script returned [" + filename +"]");
-       var oScript = document.createElement( "script" );
-       oScript.type = "text/javascript";
-       oScript.id = filename.replace(".js", "-id");
-       oScript.text = script_src;
-       oHead.appendChild( oScript );
-    }
-  });
+load_script('/script/', 'main.js');
 
 </script>
 
