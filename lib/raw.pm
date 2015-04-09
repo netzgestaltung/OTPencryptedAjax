@@ -185,9 +185,15 @@ sub login_form {
     $self->log->info("in login_form()");
     $self->log->info("remote host $ENV{'REMOTE_HOST'} connected from port $ENV{'REMOTE_PORT'}");
 #    $self->log->debug("dumping self->dump: [".(Dumper $self->dump())."]");
+    my $styles = $self->load_tmpl("styles.css");
+    my $nanoajax = $self->load_tmpl("nanoajax.html");
+    my $hex_sha256 = $self->load_tmpl("hex_sha256.html");
 
     my $template = $self->load_tmpl;
     $template->param( message => "Welcome $ENV{'REMOTE_HOST'}" );
+    $template->param( styles => $styles->output );
+    $template->param( nanoajax => $nanoajax->output );
+    $template->param( hex_sha256 => $hex_sha256->output );
     # $template->param( client_ip => "\"$ENV{'REMOTE_HOST'}\"" );
     return $template->output;
 }
@@ -300,7 +306,10 @@ sub enc_req {
     $self->log->info("the plaintext [".$plaintext."]");
     my $req_json = decode_json $plaintext;
     $self->log->info("the json [".(Dumper %{$req_json})."]");
-    if ($req_json->{"get"} eq "password_field") { 
+
+# TODO calculate the hash on the server
+    if (($req_json->{"get"} eq "password_field") 
+    && ($req_json->{"hash"} eq "d30f9a3371f74e79d0161857cefdd9ecf6d834c26e51bb5c927b3e377f19ae2c")) { 
        my $template = $self->load_tmpl('password_field.html');
        # my $options = @{$self->authen->drivers->options}[1];
        my @options = $self->authen->drivers->options;
