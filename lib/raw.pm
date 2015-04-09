@@ -235,7 +235,7 @@ sub get_random_number {
          $randomA .= sprintf "%09d", $rand;
          $num_digits -= 9;
       } else {
-         $randomA .= sprintf "%0${num_digits}d", $rand;
+         $randomA .= sprintf '%0.*s', $num_digits, $rand;
          $num_digits = 0;
       }
    }
