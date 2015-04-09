@@ -34,6 +34,7 @@ use MIME::Base64 qw( encode_base64 decode_base64 );
 use JSON::XS;
 use Fcntl;   # For O_RDWR, O_CREAT, etc.
 use NDBM_File;
+use Math::Random::ISAAC::XS;
 
 use Test::File::ShareDir
     -share => {
@@ -140,7 +141,8 @@ sub setup {
        $str2 .= $str1;
     }
     close $random;
-    srand( time ^ $$ ^ hex((unpack "H*", $str2)) );
+    $self->{'rng'} = Math::Random::ISAAC::XS->new(time, $$, hex(unpack "H*", $str2));
+
  
     return;
 }
@@ -222,6 +224,23 @@ sub error {
 
 =cut
 
+sub get_random_number {
+   my $self = shift;
+   my $num_digits = shift;
+   my $randomA = "";
+   while ($num_digits > 0) {
+      my $rand = $self->{'rng'}->irand();
+      $self->log->info("rand [".($rand)."]");
+      if ($num_digits > 9) {
+         $randomA .= sprintf "%09d", $rand;
+         $num_digits -= 9;
+      } else {
+         $randomA .= sprintf "%0${num_digits}d", $rand;
+         $num_digits = 0;
+      }
+   }
+   return $randomA;
+}
 
 sub get_challenge {
     my ($self) = @_;
@@ -240,17 +259,18 @@ sub get_challenge {
        $self->log->info("the secretPIN (".($secretPIN).")");
        #my $num_digits = length sprintf "%d", $secretPIN;
        $num_digits = length $secretPIN;
-       $randomA = sprintf "%0${num_digits}d", int(rand()*10**$num_digits);
+       $randomA = $self->get_random_number($num_digits);
+       $self->log->info("the randomA (".($randomA).")");
     } else { # username is unknown, we return some random length randomA
        if ((defined $UNKNOWN_USERS{$username}) &&
                    ($UNKNOWN_USERS{$username} > 3)) {
           $num_digits = $UNKNOWN_USERS{$username};
        } else {
-          $num_digits = 4+int(rand()*20);
+          $num_digits = 4+int($self->{'rng'}->rand()*15);
           $UNKNOWN_USERS{$username} = $num_digits;
        }
        untie %UNKNOWN_USERS;
-       $randomA = sprintf "%0${num_digits}d", int(rand()*10**$num_digits);
+       $randomA = $self->get_random_number($num_digits);
        return "{\"randomA\": \"$randomA\"}";
     }
     $self->authen->drivers->{OneTimePIN}->{users}->{$username}->{randomA} = $randomA;
@@ -309,7 +329,7 @@ sub enc_req {
 
 # TODO calculate the hash on the server
     if (($req_json->{"get"} eq "password_field") 
-    && ($req_json->{"hash"} eq "d40a8c3465f5fcb1407e2c77a5768c22abcc6e6ad6f6ca4d903050ef25b2b6fb")) { 
+    && ($req_json->{"hash"} eq "ebb42044d6fb993a5b6fcb01ca6aa02fe972adf555153a7326ce49944cd166b5")) { 
        my $template = $self->load_tmpl('password_field.html');
        # my $options = @{$self->authen->drivers->options}[1];
        my @options = $self->authen->drivers->options;
