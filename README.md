@@ -48,14 +48,18 @@ WARNING
 Please don't use it with a short secret PIN.
 
 A small keyspace is still a problem:
-Unless you have a very long secret PIN (more than 20 digits),
+Unless you have a very long secret PIN (more than 100 digits),
 which makes it a hassle to calculate the one-time-PIN from,
 the AES encryption can easily be broken with a brute-force attack.
 It took me 0.2 seconds to find the key for a 8-digit PIN.
-Please write me, if you have any ideas.
-I just added the perl-script "calculate-OTP.pl", which can be used
-to calculate really long one-time-PINs. Since I don't use any BigInt
-library yet, one-time-PINs are currently limited in length (<20 digits).
+The digit sum is a very bad hash function, because it reduces
+the keyspace drastically. Please write me, if you have any ideas
+how to solve that problem.
+I included the perl-script "calculate-OTP.pl", which can be used
+to calculate with really long PINs. I am now using
+libmath-random-isaac, which makes it possible to use even PINs
+with more than 1000 digits. The one-time PIN still won't have
+more than 4 digits though.
 
 Document verification to prevent injections
 
